@@ -2,83 +2,36 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:esri="clr-namespace:Esri.ArcGISRuntime.Maui;assembly=Esri.ArcGISRuntime.Maui"
+             xmlns:viewModels="clr-namespace:OfflineMapArcgis"
              x:Class="OfflineMapArcgis.MainPage">
+    <ContentPage.BindingContext>
+        <viewModels:MainPageViewModel />
+    </ContentPage.BindingContext>
 
     <Grid>
-        <esri:MapView x:Name="MyMapView" />
-        <Border Style="{DynamicResource EsriSampleControlPanel}">
+        <esri:MapView x:Name="MainMapView" Map="{Binding Map}" GraphicsOverlays="{Binding GraphicsOverlays}" />
+        <Border>
             <StackLayout HorizontalOptions="Center" VerticalOptions="Start">
-                <Button x:Name="TakeMapOfflineButton"
-                        Clicked="TakeMapOfflineButton_Clicked"
-                        IsEnabled="True"
-                        Text="Take map offline" />
-                <Label x:Name="CompleteMessage"
-                       Margin="10"
-                       HorizontalOptions="Center"
-                       IsVisible="false"
-                       Text="Map is offline."
-                       VerticalOptions="Center" />
+                <Button x:Name="TakeMapOfflineButton" Command="{Binding TakeMapOfflineCommand}" IsEnabled="True" Text="Take map offline" />
+                <Label x:Name="CompleteMessage" Margin="10" HorizontalOptions="Center" IsVisible="false" Text="Map is offline." VerticalOptions="Center" />
             </StackLayout>
         </Border>
         <!--BusyIndicator-->
-        <Grid x:Name="BusyIndicator"
-              Grid.RowSpan="2"
-              Grid.ColumnSpan="2"
-              BackgroundColor="#AA333333"
-              IsVisible="False">
-            <Grid HorizontalOptions="Center"
-                  RowDefinitions="auto, auto, auto"
-                  VerticalOptions="Center">
-                <Label Margin="10"
-                       FontSize="18"
-                       HorizontalOptions="Center"
-                       TextColor="White"
-                       VerticalOptions="Center">
+        <Grid x:Name="BusyIndicator" Grid.RowSpan="2" Grid.ColumnSpan="2" BackgroundColor="#AA333333" IsVisible="{Binding IsBusy}">
+            <Grid HorizontalOptions="Center" RowDefinitions="auto, auto, auto" VerticalOptions="Center" BackgroundColor="Transparent" Padding="10">
+                <Border Grid.RowSpan="3" BackgroundColor="#E0E0E0" Stroke="Transparent" StrokeShape="RoundRectangle 10"/>
+                <Label Margin="10" FontSize="18" HorizontalOptions="Center" TextColor="White" VerticalOptions="Center">
                     <Label.FormattedText>
                         <FormattedString>
                             <Span Text="Generating offline map... " />
-                            <Span x:Name="Percentage" Text="" />
+                            <Span  Text="{Binding ProgressText}" />
                         </FormattedString>
                     </Label.FormattedText>
                 </Label>
-                <ProgressBar x:Name="ProgressBar"
-                             Grid.Row="1"
-                             Margin="0,0,0,10"
-                             HeightRequest="10"
-                             HorizontalOptions="Center"
-                             IsEnabled="True"
-                             VerticalOptions="Center"
-                             WidthRequest="100" />
-                <Button x:Name="CancelJobButton"
-                        Grid.Row="3"
-                        Clicked="CancelJobButton_Clicked"
-                        HorizontalOptions="Center"
-                        Text="Cancel"
-                        WidthRequest="100" />
-            </Grid>
-        </Grid>
-        
-        <!--LoadingIndicator-->
-        <Grid x:Name="LoadingIndicator"
-              Grid.RowSpan="2"
-              Grid.ColumnSpan="2"
-              BackgroundColor="#807f7f7f"
-              IsVisible="True">
-            <Grid HorizontalOptions="Center" VerticalOptions="Center">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto" />
-                    <RowDefinition Height="auto" />
-                </Grid.RowDefinitions>
-                <Label Margin="10"
-                       FontSize="18"
-                       Text="Loading online map..."
-                       TextColor="White" />
-                <ProgressBar Grid.Row="1"
-                             HeightRequest="10"
-                             HorizontalOptions="Center"
-                             IsEnabled="True"
-                             VerticalOptions="Center"
-                             WidthRequest="100" />
+                <ProgressBar Grid.Row="1" Margin="0,0,0,10" HeightRequest="10" HorizontalOptions="Center" IsEnabled="True" VerticalOptions="Center" WidthRequest="100" 
+                             Progress="{Binding ProgressNum}" />
+                <Button Grid.Row="3" Command="{Binding CancelTakeMapOnlineCommand}" HorizontalOptions="Center" Text="Cancel" WidthRequest="100" Grid.RowSpan="2" Margin="10" />
+
             </Grid>
         </Grid>
 

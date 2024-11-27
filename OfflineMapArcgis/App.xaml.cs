@@ -9,7 +9,6 @@ namespace OfflineMapArcgis
         {
             InitializeComponent();
 
-            ArcGISRuntimeEnvironment.ApiKey= "xxxxxxxx";
             MainPage = new AppShell();
         }
     }
