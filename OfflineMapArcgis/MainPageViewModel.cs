@@ -19,13 +19,12 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Esri.ArcGISRuntime.Tasks;
-using Android.Health.Connect.DataTypes.Units;
-using Xamarin.KotlinX.Coroutines;
+using OfflineMapArcgis.Views;
 
 
 namespace OfflineMapArcgis;
 
-public partial class MainPageViewModel : ObservableObject
+public partial class MainPageViewModel : ObservableObject, IDisposable
 {
     private GenerateOfflineMapJob _generateJob;
     private Envelope _offlineArea;
@@ -43,23 +42,6 @@ public partial class MainPageViewModel : ObservableObject
     public MainPageViewModel()
     {
         _ = SetupMap();
-        TaskScheduler.UnobservedTaskException += (s, e) =>
-        {
-            Console.WriteLine("Unobserved Exception:");
-            Console.WriteLine($"Message: {e.Exception.Message}");
-            Console.WriteLine($"Stack Trace: {e.Exception.StackTrace}");
-
-            // Log inner exceptions if present
-            foreach (var inner in e.Exception.Flatten().InnerExceptions)
-            {
-                Console.WriteLine("Inner Exception:");
-                Console.WriteLine($"Message: {inner.Message}");
-                Console.WriteLine($"Stack Trace: {inner.StackTrace}");
-            }
-
-            // Mark the exception as observed
-            e.SetObserved();
-        };
     }
 
     [RelayCommand]
@@ -77,7 +59,7 @@ public partial class MainPageViewModel : ObservableObject
 
             _generateJob = offlineMapTask.GenerateOfflineMap(parameters, packagePath);
             _generateJob.ProgressChanged += GenerateJob_ProgressChanged;
-
+            _generateJob.MessageAdded += _generateJob_MessageAdded;
             GenerateOfflineMapResult results = await _generateJob.GetResultAsync();
             //_generateJob.Start();
 
@@ -102,11 +84,19 @@ public partial class MainPageViewModel : ObservableObject
         }
         catch (TaskCanceledException)
         {
-            await Application.Current.MainPage.DisplayAlert("Alert", "Taking map offline was canceled", "OK");
+            // https://stackoverflow.com/questions/3284137/taskscheduler-unobservedtaskexception-event-handler-never-being-triggered/3284286#3284286
+            /*
+                Reason: . The UnobservedTaskException will happen if a Task gets collected by the GC with an exception unobserved. 
+                TaskScheduler.UnobservedTaskException event handler never being triggered 
+                Assumption: Esri doesn’t handle the Subtasks correctly
+                Trigger for UnobservedTaskException: changing the view, then GC gets triggered
+            */
+            await Application.Current.MainPage.DisplayAlert("Alert", "Taking map offline was canceled, will be navigated to another Page in order to raise UnobservedTaskException , it will be raised at second try ", "OK");
+            await Shell.Current.GoToAsync($"//{nameof(NewPage)}");
         }
         catch (Exception ex)
         {
-            await Application.Current.MainPage.DisplayAlert("Alert", ex.Message, "OK");
+           await Application.Current.MainPage.DisplayAlert("Alert", ex.Message, "OK");
         }
         finally
         {
@@ -114,6 +104,12 @@ public partial class MainPageViewModel : ObservableObject
         }
 
     }
+
+    private void _generateJob_MessageAdded(object? sender, JobMessage e)
+    {
+        Console.WriteLine(e.Timestamp + Environment.NewLine + e.Message);
+    }
+
     [RelayCommand]
     private void CancelTakeMapOnline()
     {
@@ -171,13 +167,13 @@ public partial class MainPageViewModel : ObservableObject
     }
     private async void GenerateJob_ProgressChanged(object? sender, EventArgs e)
     {
+        var generateJob = sender as GenerateOfflineMapJob;
+        Console.WriteLine($"ProgrossChanged to {generateJob.Progress}");
 
-            var generateJob = sender as GenerateOfflineMapJob;
-
-            if (generateJob.Progress == 17)
-            {
-                Thread.Sleep(200);
-            _generateJob.CancelAsync();
+        if (generateJob.Progress >= 15)
+        {
+            Thread.Sleep(200);
+            await _generateJob.CancelAsync();
         }
 
         ProgressText = generateJob.Progress > 0 ? generateJob.Progress.ToString() + " %" : string.Empty;
@@ -212,5 +208,10 @@ public partial class MainPageViewModel : ObservableObject
         // Create the output directory.
         Directory.CreateDirectory(packagePath);
         return packagePath;
+    }
+  
+    public void Dispose()
+    {
+        GC.Collect();
     }
 }
