@@ -1,4 +1,4 @@
-# Bug Report: Exception During TakeMapOffline Task Cancellation
+# Bug Report: No Exception handling of Subtasks from GenerateOfflineMapJob 
 
 ## Description
 When performing the OfflineMapTask.GenerateOfflineMap job (see MainPageViewModel.TakeMapOffline()) sub tasks are created and not handled correctly. The same is probably true for syncronizing offline maps.
@@ -26,7 +26,7 @@ The following exception occurs when switching views after canceling the task:
 ```
 
 ### Assumption: 
-OfflineMapTask.GenerateOfflineMap job doesn’t handle the Subtask error handling correctly.
+GenerateOfflineMapJob and OfflineMapSyncJob jobs don't handle the Subtask errors.
 
 
 
