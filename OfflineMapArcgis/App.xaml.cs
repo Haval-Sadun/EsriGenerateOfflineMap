@@ -13,20 +13,37 @@ namespace OfflineMapArcgis
 
             TaskScheduler.UnobservedTaskException += (s, e) =>
             {
-                Console.WriteLine("Unobserved Exception:");
-                Console.WriteLine($"Message: {e.Exception.Message}");
-                Console.WriteLine($"Stack Trace: {e.Exception.StackTrace}");
 
-                // Log inner exceptions if present
-                foreach (var inner in e.Exception.Flatten().InnerExceptions)
-                {
-                    Console.WriteLine("Inner Exception:");
-                    Console.WriteLine($"Message: {inner.Message}");
-                    Console.WriteLine($"Stack Trace: {inner.StackTrace}");
-                }
+                Console.WriteLine("Unobserved Exception:");
+                LogExceptionDetails(e.Exception);
+
                 e.SetObserved();
             };
 
+            void LogExceptionDetails(Exception ex, int level = 0)
+            {
+                if (ex == null)
+                    return;
+
+                string indent = new string('\t', level); 
+                Console.WriteLine($"{indent}Exception Type: {ex.GetType().FullName}");
+                Console.WriteLine($"{indent}Message: {ex.Message}");
+                Console.WriteLine($"{indent}Stack Trace: {ex.StackTrace}");
+
+                if (ex is AggregateException aggregateException)
+                {
+                    Console.WriteLine($"{indent}This is an AggregateException with {aggregateException.InnerExceptions.Count} inner exceptions:");
+                    foreach (var inner in aggregateException.InnerExceptions)
+                    {
+                        LogExceptionDetails(inner, level + 1); 
+                    }
+                }
+                else if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"{indent}Inner Exception:");
+                    LogExceptionDetails(ex.InnerException, level + 1); 
+                }
+            }
         }
     }
 }
