@@ -1,48 +1,32 @@
 # Bug Report: Exception During TakeMapOffline Task Cancellation
 
 ## Description
+When performing the OfflineMapTask.GenerateOfflineMap job (see MainPageViewModel.TakeMapOffline()) sub tasks are created and not handled correctly. The same is probably true for syncronizing offline maps.
+If an error occurs in a subtask or the job is cancelled UnobservedTaskExceptions occur.
+The UnobservedTaskException will happen if a Task gets collected by the GC with an exception unobserved. Reason for that is https://stackoverflow.com/questions/3284137/taskscheduler-unobservedtaskexception-event-handler-never-being-triggered/3284286#3284286
 
-When performing a `TakeMapOffline` task and canceling it at **15%**, subtasks continue to run. While the cancellation appears to be handled correctly, switching views triggers **unobserved exceptions**, leading to crashes. 
+### Reproduce the Behaviour
+In the example the job is cancelled at **15%**, we catch the TaskCanceledException of the 'main' job. SubTask exceptions are not handled. This happens when the Button "TakeMapOffline" is clicked the second time (first time doesn't raise the excpeitons for some reasons)
 
-### Observed Behavior
-
+### Observed Behaviour
 The following exception occurs when switching views after canceling the task:
 ```
-A Task's exception(s) were not observed either by Waiting on the Task or accessing its Exception property. As a result, the unobserved exception was rethrown by the finalizer thread. (User canceled: Job canceled.)
-System.AggregateException
-Stack (Reflected by ExceptionHandler):
-   at GI.Common.Core.AExceptionHandler.LogException(Exception e, String headerText, ExceptionOutputType exceptionOutputType)
-   at GI.Common.Core.AExceptionHandler.HandleExceptionPreDoWork(Exception& e, ExceptionOutputType exceptionOutputType)
-   at GI.Common.Core.AExceptionHandler.HandleException(Exception e, ExceptionOutputType exceptionOutputType)
-   at GI.Common.Core.ExceptionHelper.HandleUnhandledException(Exception e)
-   at GI.Common.Core.EnvironmentFactory.UnhandledExceptionHandlerOnUnhandledException(Object sender, UnhandledExceptionEventArgs e)
-   at GI.Common.Core.UnhandledExceptionHandler.FireUnhandledException(Object sender, UnhandledExceptionEventArgs args)
-   at GI.Common.Core.UnhandledExceptionHandler.FireUnhandledException(Object sender, Exception exception, Boolean isTerminating)
-   at GI.Common.Core.UnhandledExceptionHandler.<>c.<Initialize>b__4_0(Object sender, UnobservedTaskExceptionEventArgs args)
-   at System.Threading.Tasks.TaskScheduler.PublishUnobservedTaskException(Object sender, UnobservedTaskExceptionEventArgs ueea)
-   at System.Threading.Tasks.TaskExceptionHolder.Finalize()
-
-
-InnerException:
-User canceled: Job canceled.
-System.Threading.Tasks.TaskCanceledException
-Stack (Reflected by ExceptionHandler):
-   at GI.Common.Core.AExceptionHandler.ExtractExceptionMessageComplete(Exception e, ExceptionOutputType outputType, Boolean isInnerException, String& msg)
-   at GI.Common.Core.AExceptionHandler.LogException(Exception e, String headerText, ExceptionOutputType exceptionOutputType)
-   at GI.Common.Core.AExceptionHandler.HandleExceptionPreDoWork(Exception& e, ExceptionOutputType exceptionOutputType)
-   at GI.Common.Core.AExceptionHandler.HandleException(Exception e, ExceptionOutputType exceptionOutputType)
-   at GI.Common.Core.ExceptionHelper.HandleUnhandledException(Exception e)
-   at GI.Common.Core.EnvironmentFactory.UnhandledExceptionHandlerOnUnhandledException(Object sender, UnhandledExceptionEventArgs e)
-   at GI.Common.Core.UnhandledExceptionHandler.FireUnhandledException(Object sender, UnhandledExceptionEventArgs args)
-   at GI.Common.Core.UnhandledExceptionHandler.FireUnhandledException(Object sender, Exception exception, Boolean isTerminating)
-   at GI.Common.Core.UnhandledExceptionHandler.<>c.<Initialize>b__4_0(Object sender, UnobservedTaskExceptionEventArgs args)
-   at System.Threading.Tasks.TaskScheduler.PublishUnobservedTaskException(Object sender, UnobservedTaskExceptionEventArgs ueea)
-   at System.Threading.Tasks.TaskExceptionHolder.Finalize()
-
+[DOTNET] Unobserved Exception:
+[DOTNET] Exception Type: System.AggregateException
+[DOTNET] Message: A Task's exception(s) were not observed either by Waiting on the Task or accessing its Exception property. As a result, the unobserved exception was rethrown by the finalizer thread. (User canceled: Job canceled.)
+[DOTNET] Stack Trace: 
+[DOTNET] This is an AggregateException with 1 inner exceptions:
+[DOTNET] 	Exception Type: System.Threading.Tasks.TaskCanceledException
+[DOTNET] 	Message: User canceled: Job canceled.
+[DOTNET] 	Stack Trace: 
+[DOTNET] 	Inner Exception:
+[DOTNET] 		Exception Type: Esri.ArcGISRuntime.ArcGISRuntimeException
+[DOTNET] 		Message: User canceled: Job canceled.
+[DOTNET] 		Stack Trace: 
 ```
-### Reason: 
-https://stackoverflow.com/questions/3284137/taskscheduler-unobservedtaskexception-event-handler-never-being-triggered/3284286#3284286
-The UnobservedTaskException will happen if a Task gets collected by the GC with an exception unobserved. 
-Assumption: Esri doesn’t handle the Subtasks correctly
 
-Trigger for UnobservedTaskException: changing the view, then GC gets triggered
+### Assumption: 
+OfflineMapTask.GenerateOfflineMap job doesn’t handle the Subtask error handling correctly.
+
+
+
