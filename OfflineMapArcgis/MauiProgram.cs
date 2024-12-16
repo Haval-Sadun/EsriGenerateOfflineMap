@@ -1,4 +1,5 @@
-﻿using Esri.ArcGISRuntime.Maui;
+﻿using CommunityToolkit.Maui;
+using Esri.ArcGISRuntime.Maui;
 using Microsoft.Extensions.Logging;
 
 namespace OfflineMapArcgis
@@ -10,6 +11,7 @@ namespace OfflineMapArcgis
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

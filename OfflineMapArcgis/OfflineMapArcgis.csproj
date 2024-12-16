@@ -57,6 +57,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Maui" Version="9.1.1" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
 		<PackageReference Include="Esri.ArcGISRuntime" Version="200.6.0" />
 		<PackageReference Include="Esri.ArcGISRuntime.Maui" Version="200.6.0" />

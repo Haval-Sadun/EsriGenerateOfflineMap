@@ -20,6 +20,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Esri.ArcGISRuntime.Tasks;
 using OfflineMapArcgis.Views;
+using CommunityToolkit.Maui.Alerts;
 
 
 namespace OfflineMapArcgis;
@@ -91,7 +92,7 @@ public partial class MainPageViewModel : ObservableObject, IDisposable
                 Assumption: Esri doesn’t handle the Subtasks correctly
                 Trigger for UnobservedTaskException: changing the view, then GC gets triggered
             */
-            await Application.Current.MainPage.DisplayAlert("Alert", "Taking map offline was canceled, will be navigated to another Page in order to raise UnobservedTaskException , it will be raised at second try ", "OK");
+            await Toast.Make( "Try again to raise UnobservedTaskException , it will be raised at second try ").Show();
             await Shell.Current.GoToAsync($"//{nameof(NewPage)}");
         }
         catch (Exception ex)
